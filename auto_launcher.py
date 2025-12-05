@@ -132,10 +132,10 @@ def run_ransomware():
 def main():
     """Main entry point"""
     print("""
-╔════════════════════════════════════════════════════════════╗
-║  RANSOMWARE PRO v2.0 - UNIVERSAL AUTO-INSTALLER           ║
-║  Automatic Python + Dependencies + Ransomware Launch      ║
-╚════════════════════════════════════════════════════════════╝
+============================================================
+ RANSOMWARE PRO v2.0 - UNIVERSAL AUTO-INSTALLER
+ Automatic Python + Dependencies + Ransomware Launch
+============================================================
     """)
     
     # Get C2 host from command line
