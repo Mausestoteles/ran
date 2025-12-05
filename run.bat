@@ -21,40 +21,12 @@ echo.
 REM Check if Python is available
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [!] Python not found, attempting auto-install...
+    echo [!] Python not found!
+    echo [!] Please install Python 3.8+ from https://python.org/downloads
+    echo [!] Make sure to check "Add Python to PATH" during installation
     echo.
-    
-    REM Try to install via chocolatey
-    choco --version >nul 2>&1
-    if %errorlevel% equ 0 (
-        echo [*] Using Chocolatey to install Python...
-        choco install python -y --no-progress >nul 2>&1
-    ) else (
-        echo [*] Downloading Python 3.11 installer...
-        
-        REM Download Python
-        powershell -NoProfile -Command "
-        try {
-            $url = 'https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe'
-            $file = 'python-installer.exe'
-            Write-Host '[*] Downloading from python.org...'
-            (New-Object System.Net.WebClient).DownloadFile($url, $file)
-            
-            if (Test-Path $file) {
-                Write-Host '[*] Running installer...'
-                & $file /quiet InstallAllUsers=1 PrependPath=1 | Out-Null
-                Remove-Item $file -Force
-                Write-Host '[+] Python installed successfully'
-            }
-        } catch {
-            Write-Host '[!] Download failed: $_'
-        }
-        "
-    )
-    
-    echo.
-    echo [*] Python should now be installed, retrying...
-    echo.
+    pause
+    exit /b 1
 )
 
 REM Final check
