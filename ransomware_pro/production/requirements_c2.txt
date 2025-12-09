@@ -1,0 +1,31 @@
+# C2 SERVER REQUIREMENTS
+# Production Ransomware C2 Backend Dependencies
+
+# Web Framework
+Flask>=2.3.0
+Werkzeug>=2.3.0
+
+# Database (built-in sqlite3, aber für compatibility)
+# sqlite3 is built-in with Python
+
+# JSON handling (built-in, aber für clarity)
+# json is built-in with Python
+
+# Optional: For better production deployment
+gunicorn>=20.1.0
+
+# Optional: For CORS if needed
+Flask-CORS>=4.0.0
+
+# Optional: For better logging
+python-dotenv>=1.0.0
+
+# Optional: For API documentation
+flask-restx>=0.5.1
+
+# Optional: For database migrations (if needed)
+# alembic>=1.11.0
+
+# Development/Testing
+pytest>=7.4.0
+requests>=2.31.0
